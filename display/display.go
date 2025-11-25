@@ -14,7 +14,7 @@ import (
 	"github.com/jnovack/cloudkey/src/leds"
 )
 
-var screens [2]draw.Image
+var screens [3]draw.Image
 var myLeds leds.LEDS
 var fb draw.Image
 var width, height int
@@ -81,9 +81,9 @@ func init() {
 // New initializes the screens
 func New(opts CmdLineOpts) {
 	// Build the screens in the background
-	//buildSpeedTest(1, opts.Demo)
 	buildSystemStats(0, opts.Demo)
 	buildNetwork(1, opts.Demo)
+	buildSpeedTest(2, opts.Demo)
 	// Start the carousel!
 	startFadeCarousel(opts.Delay)
 }
