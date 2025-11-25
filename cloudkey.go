@@ -34,6 +34,7 @@ func init() {
 	flag.StringVar(&opts.Pidfile, "pidfile", "/var/run/zeromon.pid", "pidfile")
 	flag.BoolVar(&opts.Version, "version", false, "print version and exit")
 	flagutil.SetFlagsFromEnv(flag.CommandLine, "CLOUDKEY")
+	flag.Parse()
 
 	if opts.Version {
 		// already printed version
