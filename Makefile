@@ -10,12 +10,48 @@ all: buildnew
 
 .PHONY: install
 install:
-	cp cloudkey.service /lib/systemd/system/cloudkey.service
-	cp cloudkey /usr/local/bin/cloudkey
+	sudo cp cloudkey.service /lib/systemd/system/cloudkey.service
+	sudo cp cloudkey /usr/local/bin/cloudkey
+	sudo systemctl daemon-reload
+
+.PHONY: update
+update:
+	sudo systemctl stop cloudkey
+	sudo cp cloudkey /usr/local/bin/cloudkey
+	sudo systemctl start cloudkey
+
+.PHONY: stop
+stop:
+	sudo systemctl stop cloudkey
 
 .PHONY: build
 build:
-	GOOS=linux GOARCH=arm64 go build -ldflags $(GO_LDFLAGS) cloudkey.go
+	sudo GOOS=linux GOARCH=arm64 go build -ldflags $(GO_LDFLAGS) cloudkey.go
 
+.PHONY: buildnew
 buildnew:
-	GOOS=linux GOARCH=arm64 go build cloudkey.go
+	sudo GOOS=linux GOARCH=arm64 go build cloudkey.go
+
+.PHONY: clean
+clean:
+	sudo rm -f cloudkey
+
+.PHONY: restart
+restart: build
+	sudo systemctl restart cloudkey
+
+.PHONY: status
+status:
+	sudo systemctl status cloudkey
+
+.PHONY: logs
+logs:
+	sudo journalctl -u cloudkey -f
+
+.PHONY: test
+test:
+	./test_env_config.sh
+
+.PHONY: quick-test
+quick-test:
+	./quick_test.sh

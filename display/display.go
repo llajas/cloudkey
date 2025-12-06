@@ -21,14 +21,17 @@ var width, height int
 
 // CmdLineOpts structure for the command line options
 type CmdLineOpts struct {
-	Delay   float64
-	Reset   bool
-	Demo    bool
-	Version bool
-	Pidfile string
+	Delay       float64
+	Reset       bool
+	Demo        bool
+	Version     bool
+	Pidfile     string
+	UDMBaseURL  string
+	UDMUsername string
+	UDMPassword string
+	UDMSite     string
+	UDMVersion  string
 }
-
-
 
 func init() {
 	myLeds = leds.LEDS{}
@@ -76,14 +79,12 @@ func init() {
 	myLeds.LED("white").Off()
 }
 
-
-
 // New initializes the screens
 func New(opts CmdLineOpts) {
 	// Build the screens in the background
 	buildSystemStats(0, opts.Demo)
 	buildNetwork(1, opts.Demo)
-	buildSpeedTest(2, opts.Demo)
+	buildSpeedTest(2, opts.Demo, opts)
 	// Start the carousel!
 	startFadeCarousel(opts.Delay)
 }

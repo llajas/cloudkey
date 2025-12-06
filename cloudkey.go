@@ -32,6 +32,11 @@ func init() {
 	flag.BoolVar(&opts.Reset, "reset", false, "reset/clear the screen")
 	flag.BoolVar(&opts.Demo, "demo", false, "use fake data for display only")
 	flag.StringVar(&opts.Pidfile, "pidfile", "/var/run/zeromon.pid", "pidfile")
+	flag.StringVar(&opts.UDMBaseURL, "udm-baseurl", "https://192.168.1.1:443", "UDM Pro base URL")
+	flag.StringVar(&opts.UDMUsername, "udm-username", "", "UDM Pro username")
+	flag.StringVar(&opts.UDMPassword, "udm-password", "", "UDM Pro password")
+	flag.StringVar(&opts.UDMSite, "udm-site", "default", "UDM Pro site ID")
+	flag.StringVar(&opts.UDMVersion, "udm-version", "8.0.28", "UDM Pro controller version")
 	flag.BoolVar(&opts.Version, "version", false, "print version and exit")
 	flagutil.SetFlagsFromEnv(flag.CommandLine, "CLOUDKEY")
 	flag.Parse()
@@ -43,8 +48,8 @@ func init() {
 
 	pid, err := pidfile.Create(opts.Pidfile)
 	if err != nil {
-			fmt.Printf("Error creating PID file: %s\n", err)
-			os.Exit(1)
+		fmt.Printf("Error creating PID file: %s\n", err)
+		os.Exit(1)
 	}
 
 	// Setup Service
