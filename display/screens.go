@@ -103,7 +103,8 @@ func buildSpeedTest(i int, demo bool, opts CmdLineOpts) {
 					)
 					if err != nil {
 						fmt.Printf("Error fetching UDM Pro speedtest: %v\n", err)
-						hasErrorState = true // Mark that we're in an error state
+						hasErrorState = true
+						SetUDMError(true)
 						if strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "cannot reach") {
 							dmsg = "network error"
 							umsg = "check UDM IP"
@@ -126,8 +127,8 @@ func buildSpeedTest(i int, demo bool, opts CmdLineOpts) {
 							tmsg = "see UDM_SETUP"
 						}
 					} else {
-						// Success - clear error state and update display
 						hasErrorState = false
+						SetUDMError(false)
 						isNewer := lastKnownTimestamp == 0 || result.Timestamp > lastKnownTimestamp
 
 						if isNewer {

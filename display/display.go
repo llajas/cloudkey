@@ -80,16 +80,16 @@ func init() {
 
 	myLeds.AllOff()
 	myLeds.LED("blue").On()
-	myLeds.LED("rack:blue").On()
 }
 
 // New initializes the screens
 func New(opts CmdLineOpts) {
-	// Build the screens in the background
 	buildSystemStats(0, opts.Demo)
 	buildNetwork(1, opts.Demo)
 	buildSpeedTest(2, opts.Demo, opts)
-	// Start the carousel!
+
+	startHealthMonitor()
+
 	startFadeCarousel(opts.Delay)
 }
 

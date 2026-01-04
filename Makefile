@@ -14,8 +14,28 @@ install:
 	sudo cp cloudkey /usr/local/bin/cloudkey
 	sudo systemctl daemon-reload
 
+.PHONY: backup
+backup:
+	@if [ -f /usr/local/bin/cloudkey ]; then \
+		sudo cp /usr/local/bin/cloudkey /usr/local/bin/cloudkey.backup; \
+		echo "Backed up to /usr/local/bin/cloudkey.backup"; \
+	else \
+		echo "No existing binary to backup"; \
+	fi
+
+.PHONY: rollback
+rollback:
+	@if [ -f /usr/local/bin/cloudkey.backup ]; then \
+		sudo systemctl stop cloudkey; \
+		sudo cp /usr/local/bin/cloudkey.backup /usr/local/bin/cloudkey; \
+		sudo systemctl start cloudkey; \
+		echo "Rolled back to previous version"; \
+	else \
+		echo "No backup found at /usr/local/bin/cloudkey.backup"; \
+	fi
+
 .PHONY: update
-update:
+update: backup
 	sudo systemctl stop cloudkey
 	sudo cp cloudkey /usr/local/bin/cloudkey
 	sudo systemctl start cloudkey
