@@ -74,6 +74,7 @@ func buildSpeedTest(i int, demo bool, opts CmdLineOpts) {
 			var lastResult *network.SpeedtestResult
 			var lastFetchTime time.Time
 			var lastKnownTimestamp int64
+			var hasErrorState bool // Track if we're in an error state
 
 			// Initial fetch immediately at startup
 			fmt.Println("Fetching initial speedtest data immediately...")
@@ -102,6 +103,7 @@ func buildSpeedTest(i int, demo bool, opts CmdLineOpts) {
 					)
 					if err != nil {
 						fmt.Printf("Error fetching UDM Pro speedtest: %v\n", err)
+						hasErrorState = true // Mark that we're in an error state
 						if strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "cannot reach") {
 							dmsg = "network error"
 							umsg = "check UDM IP"
@@ -114,7 +116,7 @@ func buildSpeedTest(i int, demo bool, opts CmdLineOpts) {
 							dmsg = "auth error"
 							umsg = "403 forbidden"
 							tmsg = "check credentials"
-						} else if strings.Contains(err.Error(), "429") {
+						} else if strings.Contains(err.Error(), "rate limited") || strings.Contains(err.Error(), "too many requests") {
 							dmsg = "rate limited"
 							umsg = "retry tomorrow"
 							tmsg = "API limit hit"
@@ -124,28 +126,38 @@ func buildSpeedTest(i int, demo bool, opts CmdLineOpts) {
 							tmsg = "see UDM_SETUP"
 						}
 					} else {
-						// Success - check if this is newer data
+						// Success - clear error state and update display
+						hasErrorState = false
 						isNewer := lastKnownTimestamp == 0 || result.Timestamp > lastKnownTimestamp
 
 						if isNewer {
 							fmt.Printf("Found newer speedtest data (timestamp: %d)\n", result.Timestamp)
 							lastResult = result
 							lastKnownTimestamp = result.Timestamp
-							dmsg = network.FormatSpeed(result.DownloadMbps)
-							umsg = network.FormatSpeed(result.UploadMbps)
-							tmsg = network.GetRelativeTime(result.Timestamp)
 							fmt.Printf("UDM Pro Speedtest - Download: %.1f Mb/s, Upload: %.1f Mb/s, Latency: %.1f ms\n",
 								result.DownloadMbps, result.UploadMbps, result.LatencyMs)
 						} else {
-							fmt.Printf("No new speedtest data (still timestamp: %d)\n", lastKnownTimestamp)
+							fmt.Printf("No new speedtest data (still timestamp: %d) - but cleared error state\n", lastKnownTimestamp)
 						}
+
+						// ALWAYS update display messages on successful response (clears any error state)
+						dmsg = network.FormatSpeed(result.DownloadMbps)
+						umsg = network.FormatSpeed(result.UploadMbps)
+						tmsg = network.GetRelativeTime(result.Timestamp)
 
 						// Always update fetch time regardless of whether data is new
 						lastFetchTime = now
 					}
 				} else {
-					// Use cached data
-					if lastResult != nil {
+					// Use cached data - but only if we're not in an error state
+					if lastResult != nil && !hasErrorState {
+						dmsg = network.FormatSpeed(lastResult.DownloadMbps)
+						umsg = network.FormatSpeed(lastResult.UploadMbps)
+						tmsg = network.GetRelativeTime(lastResult.Timestamp)
+					} else if lastResult != nil && hasErrorState {
+						// We have cached data but were in error state - clear error and use cached data
+						fmt.Printf("Clearing error state and using cached speedtest data\n")
+						hasErrorState = false
 						dmsg = network.FormatSpeed(lastResult.DownloadMbps)
 						umsg = network.FormatSpeed(lastResult.UploadMbps)
 						tmsg = network.GetRelativeTime(lastResult.Timestamp)
