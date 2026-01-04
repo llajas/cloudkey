@@ -14,7 +14,7 @@ import (
 	"cloudkey/src/leds"
 )
 
-var screens [3]draw.Image
+var screens [5]draw.Image
 var myLeds leds.LEDS
 var fb draw.Image
 var width, height int
@@ -84,9 +84,11 @@ func init() {
 
 // New initializes the screens
 func New(opts CmdLineOpts) {
-	buildSystemStats(0, opts.Demo)
-	buildNetwork(1, opts.Demo)
-	buildSpeedTest(2, opts.Demo, opts)
+	buildCPUStats(0, opts.Demo)
+	buildRAMStats(1, opts.Demo)
+	buildSwapStats(2, opts.Demo)
+	buildNetwork(3, opts.Demo)
+	buildSpeedTest(4, opts.Demo, opts)
 
 	startHealthMonitor()
 

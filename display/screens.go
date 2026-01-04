@@ -190,6 +190,70 @@ func buildSpeedTest(i int, demo bool, opts CmdLineOpts) {
 	}
 }
 
+func buildCPUStats(i int, demo bool) {
+	screen := screens[i]
+
+	go func() {
+		for {
+			cpuUsage, _ := getCPUUsagePerCore()
+
+			draw.Draw(screen, screen.Bounds(), image.Black, image.ZP, draw.Src)
+			draw.Draw(screen, image.Rect(2, 2, 2+16, 2+16), images.Load("cpu"), image.ZP, draw.Src)
+
+			write(screen, "CPU", 22, 1, 12, "lato-regular")
+			write(screen, fmt.Sprintf("%.1f%%", cpuUsage), 22, 21, 18, "lato-regular")
+
+			time.Sleep(5 * time.Second)
+		}
+	}()
+}
+
+func buildRAMStats(i int, demo bool) {
+	screen := screens[i]
+
+	go func() {
+		for {
+			v, _ := mem.VirtualMemory()
+			usedGB := float64(v.Used) / (1024 * 1024 * 1024)
+			totalGB := float64(v.Total) / (1024 * 1024 * 1024)
+
+			draw.Draw(screen, screen.Bounds(), image.Black, image.ZP, draw.Src)
+			draw.Draw(screen, image.Rect(2, 2, 2+16, 2+16), images.Load("ram"), image.ZP, draw.Src)
+
+			write(screen, "RAM", 22, 1, 12, "lato-regular")
+			write(screen, fmt.Sprintf("%.1f/%.1fGB", usedGB, totalGB), 22, 21, 12, "lato-regular")
+			write(screen, fmt.Sprintf("%.1f%%", v.UsedPercent), 22, 41, 12, "lato-regular")
+
+			time.Sleep(5 * time.Second)
+		}
+	}()
+}
+
+func buildSwapStats(i int, demo bool) {
+	screen := screens[i]
+
+	go func() {
+		for {
+			s, _ := mem.SwapMemory()
+			usedGB := float64(s.Used) / (1024 * 1024 * 1024)
+			totalGB := float64(s.Total) / (1024 * 1024 * 1024)
+
+			draw.Draw(screen, screen.Bounds(), image.Black, image.ZP, draw.Src)
+			draw.Draw(screen, image.Rect(2, 2, 2+16, 2+16), images.Load("ram"), image.ZP, draw.Src)
+
+			write(screen, "SWAP", 22, 1, 12, "lato-regular")
+			if s.Total == 0 {
+				write(screen, "Not configured", 22, 21, 12, "lato-regular")
+			} else {
+				write(screen, fmt.Sprintf("%.1f/%.1fGB", usedGB, totalGB), 22, 21, 12, "lato-regular")
+				write(screen, fmt.Sprintf("%.1f%%", s.UsedPercent), 22, 41, 12, "lato-regular")
+			}
+
+			time.Sleep(5 * time.Second)
+		}
+	}()
+}
+
 func buildSystemStats(i int, demo bool) {
 
 	screen := screens[i]
