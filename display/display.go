@@ -9,9 +9,9 @@ import (
 
 	build "github.com/jnovack/go-version"
 
-	"github.com/jnovack/cloudkey/images"
-	"github.com/jnovack/cloudkey/src/framebuffer"
-	"github.com/jnovack/cloudkey/src/leds"
+	"cloudkey/images"
+	"cloudkey/src/framebuffer"
+	"cloudkey/src/leds"
 )
 
 var screens [3]draw.Image
@@ -35,8 +35,11 @@ type CmdLineOpts struct {
 
 func init() {
 	myLeds = leds.LEDS{}
-	myLeds.LED("blue").Off()
+	leds.PrintDiscoveredLEDs()
+
+	myLeds.AllOff()
 	myLeds.LED("white").On()
+	myLeds.LED("rack:white").On()
 
 	// Framebuffer has global scope
 	// therefore err must have local scope to prevent redefining
@@ -75,8 +78,9 @@ func init() {
 		time.Sleep(time.Duration(r.Intn(50)) * time.Millisecond)
 	}
 
+	myLeds.AllOff()
 	myLeds.LED("blue").On()
-	myLeds.LED("white").Off()
+	myLeds.LED("rack:blue").On()
 }
 
 // New initializes the screens
@@ -91,8 +95,7 @@ func New(opts CmdLineOpts) {
 
 // Shutdown the LEDs
 func Shutdown() {
-	myLeds.LED("blue").Off()
-	myLeds.LED("white").Off()
+	myLeds.AllOff()
 }
 
 // Output the screen/image immediately to the framebuffer
