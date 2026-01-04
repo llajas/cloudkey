@@ -14,23 +14,26 @@ import (
 	"cloudkey/src/leds"
 )
 
-var screens [5]draw.Image
+var screens [6]draw.Image
+var activeScreenCount int
 var myLeds leds.LEDS
 var fb draw.Image
 var width, height int
 
 // CmdLineOpts structure for the command line options
 type CmdLineOpts struct {
-	Delay       float64
-	Reset       bool
-	Demo        bool
-	Version     bool
-	Pidfile     string
-	UDMBaseURL  string
-	UDMUsername string
-	UDMPassword string
-	UDMSite     string
-	UDMVersion  string
+	Delay         float64
+	Reset         bool
+	Demo          bool
+	Version       bool
+	Pidfile       string
+	UDMBaseURL    string
+	UDMUsername   string
+	UDMPassword   string
+	UDMSite       string
+	UDMVersion    string
+	K8sEnabled    bool
+	K8sKubeconfig string
 }
 
 func init() {
@@ -89,6 +92,12 @@ func New(opts CmdLineOpts) {
 	buildSwapStats(2, opts.Demo)
 	buildNetwork(3, opts.Demo)
 	buildSpeedTest(4, opts.Demo, opts)
+
+	activeScreenCount = 5
+	if opts.K8sEnabled {
+		buildKubernetes(5, opts.Demo, opts)
+		activeScreenCount = 6
+	}
 
 	startHealthMonitor()
 

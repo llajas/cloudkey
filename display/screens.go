@@ -1,18 +1,21 @@
 package display
 
 import (
+	"context"
 	"fmt"
-	"github.com/shirou/gopsutil/v4/mem"
 	"image"
 	"image/draw"
 	"os"
 	"strings"
 	"time"
 
-	"cloudkey/images"
-	"cloudkey/src/network"
+	"github.com/shirou/gopsutil/v4/mem"
 
 	linuxproc "github.com/c9s/goprocinfo/linux"
+
+	"cloudkey/images"
+	"cloudkey/src/kubernetes"
+	"cloudkey/src/network"
 )
 
 func buildNetwork(i int, demo bool) {
@@ -194,8 +197,40 @@ func buildCPUStats(i int, demo bool) {
 	screen := screens[i]
 
 	go func() {
+		var prevActive, prevTotal uint64
+		first := true
+
 		for {
-			cpuUsage, _ := getCPUUsagePerCore()
+			stat, err := linuxproc.ReadStat("/proc/stat")
+			if err != nil {
+				time.Sleep(5 * time.Second)
+				continue
+			}
+
+			var currActive, currTotal uint64
+			for _, stats := range stat.CPUStats {
+				user := stats.User
+				system := stats.System
+				idle := stats.Idle
+				iowait := stats.IOWait
+
+				currTotal += user + system + idle + iowait
+				currActive += user + system + iowait
+			}
+
+			var cpuUsage float64
+			if first {
+				first = false
+			} else {
+				deltaActive := currActive - prevActive
+				deltaTotal := currTotal - prevTotal
+				if deltaTotal > 0 {
+					cpuUsage = (float64(deltaActive) / float64(deltaTotal)) * 100
+				}
+			}
+
+			prevActive = currActive
+			prevTotal = currTotal
 
 			draw.Draw(screen, screen.Bounds(), image.Black, image.ZP, draw.Src)
 			draw.Draw(screen, image.Rect(2, 2, 2+16, 2+16), images.Load("cpu"), image.ZP, draw.Src)
@@ -326,4 +361,75 @@ func getCPUUsagePerCore() (float64, error) {
 
 	usagePercentage := (float64(totalCPUUsage) / float64(totalCPUTime)) * 100
 	return usagePercentage, nil
+}
+
+func buildKubernetes(i int, demo bool, opts CmdLineOpts) {
+	screen := screens[i]
+
+	draw.Draw(screen, screen.Bounds(), image.Black, image.ZP, draw.Src)
+	draw.Draw(screen, image.Rect(2, 2, 2+16, 2+16), images.Load("kubernetes"), image.ZP, draw.Src)
+	draw.Draw(screen, image.Rect(2, 22, 2+16, 22+16), images.Load("kubernetes"), image.ZP, draw.Src)
+	draw.Draw(screen, image.Rect(2, 42, 2+16, 42+16), images.Load("kubernetes"), image.ZP, draw.Src)
+
+	if demo {
+		write(screen, "8/8 nodes", 22, 1, 12, "lato-regular")
+		write(screen, "Healthy", 22, 21, 12, "lato-regular")
+		write(screen, "195 pods (312)", 22, 41, 12, "lato-regular")
+		return
+	}
+
+	go func() {
+		var client *kubernetes.Client
+		var lastGoodStatus *kubernetes.ClusterStatus
+		var initError bool
+
+		client, err := kubernetes.NewClient(opts.K8sKubeconfig)
+		if err != nil {
+			fmt.Printf("K8s client init error: %v\n", err)
+			initError = true
+		}
+
+		for {
+			var nodesMsg, healthMsg, podsMsg string
+
+			if initError {
+				nodesMsg = "K8s offline"
+				healthMsg = "config error"
+				podsMsg = "check kubeconfig"
+			} else {
+				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+				status, err := client.GetClusterStatus(ctx)
+				cancel()
+
+				if err != nil {
+					fmt.Printf("K8s status error: %v\n", err)
+					if lastGoodStatus != nil {
+						nodesMsg = fmt.Sprintf("%d/%d nodes*", lastGoodStatus.NodesReady, lastGoodStatus.NodesTotal)
+						healthMsg = "Offline*"
+						podsMsg = fmt.Sprintf("%d pods (%d)*", lastGoodStatus.PodsRunning, lastGoodStatus.ContainerCount)
+					} else {
+						nodesMsg = "K8s offline"
+						healthMsg = "unreachable"
+						podsMsg = "check config"
+					}
+				} else {
+					lastGoodStatus = status
+					nodesMsg = fmt.Sprintf("%d/%d nodes", status.NodesReady, status.NodesTotal)
+					if status.Healthy {
+						healthMsg = "Healthy"
+					} else {
+						healthMsg = "Degraded"
+					}
+					podsMsg = fmt.Sprintf("%d pods (%d)", status.PodsRunning, status.ContainerCount)
+				}
+			}
+
+			draw.Draw(screen, image.Rect(20, 0, 160, 60), image.Black, image.ZP, draw.Src)
+			write(screen, nodesMsg, 22, 1, 12, "lato-regular")
+			write(screen, healthMsg, 22, 21, 12, "lato-regular")
+			write(screen, podsMsg, 22, 41, 12, "lato-regular")
+
+			time.Sleep(30 * time.Second)
+		}
+	}()
 }

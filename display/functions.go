@@ -100,7 +100,7 @@ func fade(inverse bool) {
 // startFadeCarousel Fast and smooth (default)
 func startFadeCarousel(delay float64) {
 	for {
-		for s := range screens {
+		for s := 0; s < activeScreenCount; s++ {
 			capture := image.NewGray(fb.Bounds())
 			draw.Draw(capture, capture.Bounds(), fb, image.ZP, draw.Src)
 			// Fade Old Screen Out

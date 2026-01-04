@@ -11,7 +11,7 @@ Generation 2 device.
 
 ### Display Screens
 
-The 160x60 LCD cycles through 5 information screens:
+The 160x60 LCD cycles through up to 6 information screens:
 
 | Screen | Content |
 |--------|---------|
@@ -20,6 +20,7 @@ The 160x60 LCD cycles through 5 information screens:
 | Swap | Used/Total swap in GB + percentage |
 | Network | Hostname, LAN IP, WAN IP |
 | Speedtest | Download/Upload speeds from UDM Pro |
+| Kubernetes | Node count, cluster health, pod/container count (optional) |
 
 ### LED Status Indicators
 
@@ -44,6 +45,19 @@ The Ubiquiti logo LED (`ulogo_ctrl`) stays on while the service is running.
 ### UDM Pro Integration
 
 Fetches speedtest results from your UDM Pro via the UniFi API. Configure credentials via environment variables (see Configuration section).
+
+### Kubernetes Integration
+
+Displays cluster status including node health, pod counts, and container counts. The screen shows:
+- **Row 1**: Ready/Total nodes (e.g., `8/8 nodes`)
+- **Row 2**: Cluster health status (`Healthy` or `Degraded`)
+- **Row 3**: Running pods with container count (e.g., `195 pods (312)`)
+
+When the cluster becomes unreachable:
+- If data was previously fetched, shows last known values with an asterisk (`*`)
+- If never connected, shows `K8s offline`
+
+Enable via `CLOUDKEY_K8S_ENABLED=true` in your configuration.
 
 ## Installation
 
@@ -82,11 +96,17 @@ Set environment variables in `/etc/cloudkey.env`:
 
 ```bash
 CLOUDKEY_DELAY=7500              # Screen carousel delay in milliseconds
+
+# UDM Pro Integration
 CLOUDKEY_UDM_BASEURL=https://192.168.1.1:443
 CLOUDKEY_UDM_USERNAME=admin
 CLOUDKEY_UDM_PASSWORD=yourpassword
 CLOUDKEY_UDM_SITE=default
 CLOUDKEY_UDM_VERSION=8.0.28
+
+# Kubernetes Integration (optional)
+CLOUDKEY_K8S_ENABLED=true
+CLOUDKEY_K8S_KUBECONFIG=/path/to/.kube/config
 ```
 
 ## Makefile Commands

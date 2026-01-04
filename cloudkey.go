@@ -37,6 +37,8 @@ func init() {
 	flag.StringVar(&opts.UDMPassword, "udm-password", "", "UDM Pro password")
 	flag.StringVar(&opts.UDMSite, "udm-site", "default", "UDM Pro site ID")
 	flag.StringVar(&opts.UDMVersion, "udm-version", "8.0.28", "UDM Pro controller version")
+	flag.BoolVar(&opts.K8sEnabled, "k8s-enabled", false, "enable Kubernetes status screen")
+	flag.StringVar(&opts.K8sKubeconfig, "k8s-kubeconfig", "", "path to kubeconfig file (uses in-cluster config if empty)")
 	flag.BoolVar(&opts.Version, "version", false, "print version and exit")
 	flagutil.SetFlagsFromEnv(flag.CommandLine, "CLOUDKEY")
 	flag.Parse()

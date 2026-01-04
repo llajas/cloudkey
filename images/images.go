@@ -40,4 +40,5 @@ func init() {
 	assets["uploadIdle"] = uploadIdle
 	assets["ram"] = ram
 	assets["cpu"] = cpu
+	assets["kubernetes"] = kubernetes
 }
